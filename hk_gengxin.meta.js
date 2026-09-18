@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         测试脚本
+// @name         好看视频
 // @namespace    https://github.com/dymcn
-// @version      1.0.0
+// @version      1.0.1
 // @description  Github+jsdelivr自动更新
 // @author       yourname
 // @match        https://*/*
