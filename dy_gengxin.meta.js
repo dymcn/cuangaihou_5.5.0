@@ -5,6 +5,6 @@
 // @description  Github+jsdelivr自动更新
 // @author       yourname
 // @match        https://*/*
-// @updateURL    https://cdn.jsdelivr.net/gh/dymcn/cuangaihou_5.5.0@main/更新.meta.js
+// @updateURL    https://cdn.jsdelivr.net/gh/dymcn/cuangaihou_5.5.0@main/gengxin.meta.js
 // @downloadURL  https://cdn.jsdelivr.net/gh/dymcn/cuangaihou_5.5.0@main/douyin.user.js
 // ==/UserScript==
