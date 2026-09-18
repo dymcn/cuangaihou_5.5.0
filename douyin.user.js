@@ -1,15 +1,13 @@
 // ==UserScript==
-// @name         抖音作者主页-多重防护优化版（降噪+万位）
+// @name         抖音面板-多重优化版（降噪+万位）
 // @namespace    http://181711.xyz/
-// @version      1.0.0
-// @description  减少控制台刷屏、防止高频扫描卡死，更新面板字段，增加F刷新按钮，多重防类名变更
+// @version      1.0.1
+// @description  减少调试刷屏、防高频扫描卡死，更新面板字段，F刷新按钮，多重防变更
 // @author       You
 // @match        https://www.douyin.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=douyin.com
 // @grant        none
 // ==/UserScript==
-
-console.log('脚本运行成功，版本1.0.0');
 
 (function () {
     let panelEl = null;
@@ -18,13 +16,10 @@ console.log('脚本运行成功，版本1.0.0');
     const backupClassPool = ["EB3BkdQ8", "frUrWD64"];
     const hasHashTagReg = /#\S+/;
 
-    // ===================== 万位分隔格式化函数 1234567 → 123,4567 =====================
     function formatWanSep(val) {
         if (val === null || val === undefined || val === "") return "无";
         let numStr = String(val);
-        // 只处理纯数字
         if (!/^\d+$/.test(numStr)) return val;
-        // 从右往左每4位插入逗号
         let res = "";
         let cnt = 0;
         for (let i = numStr.length - 1; i >= 0; i--) {
@@ -38,8 +33,6 @@ console.log('脚本运行成功，版本1.0.0');
         return res;
     }
 
-
-    // 更新后的字段列表
     const fieldList = [
         { key: "nickname", label: "作者", linkSearch: true },
         { key: "unique_id", label: "抖音号" },
@@ -57,9 +50,8 @@ console.log('脚本运行成功，版本1.0.0');
         { key: "following_count", label: "关注总数", wanFormat: true },
     ];
     let dragState = { isDrag: false, offsetX: 0, offsetY: 0 };
-    let eventBindFlag = false; //标记事件仅绑定一次，防止重复注册
+    let eventBindFlag = false;
 
-    //====================悬浮信息面板====================
     function createPanel() {
         if (panelEl && document.body.contains(panelEl)) return panelEl;
         panelEl = document.createElement("div");
@@ -72,12 +64,10 @@ console.log('脚本运行成功，版本1.0.0');
         dragHeader.innerText = "【拖动窗口】键盘F加载主页数据";
         dragHeader.style.cssText = "cursor:move;padding:4px 0;border-bottom:1px solid #555;margin-bottom:6px;color:#ddd;";
 
-        //新增F刷新按钮（在收起左侧）
         const refreshFBtn = document.createElement("button");
         refreshFBtn.innerText = "F键";
         refreshFBtn.style.cssText = "float:right;padding:2px 6px;font-size:12px;cursor:pointer;margin-left:8px";
         refreshFBtn.onclick = () => {
-            //模拟按下F键盘事件
             const keydownEvt = new KeyboardEvent("keydown", {key:"F",code:"KeyF"});
             document.dispatchEvent(keydownEvt);
         };
@@ -143,7 +133,6 @@ console.log('脚本运行成功，版本1.0.0');
             fieldList.forEach(f => {
                 let val = f.key === "sub_title" ? subTitleStr : user[f.key];
                 if (val === undefined || val === null || val === "") val = "无";
-                //万位分隔处理
                 if (f.wanFormat) val = formatWanSep(val);
                 if (f.key === "signature" && val !== "无") val = val.replace(/\n/g, "<br>");
                 if (f.linkSearch && val !== "无") {
@@ -155,10 +144,8 @@ console.log('脚本运行成功，版本1.0.0');
             });
             contentWrap.innerHTML = html;
         } catch (err) {
-            //只保留异常日志，去掉刷屏打印
         }
     }
-    //====================XHR/Fetch捕获用户信息====================
     const origOpen = XMLHttpRequest.prototype.open;
     const origSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function (method, url) {
@@ -192,7 +179,6 @@ console.log('脚本运行成功，版本1.0.0');
         return resp;
     };
 
-    //====================多重防护定位主页文案p标签====================
     function findVideoTextP(clickTarget) {
         const videoCardA = clickTarget.closest('a[href^="/video/"]');
         if (!videoCardA) return null;
@@ -260,7 +246,6 @@ console.log('脚本运行成功，版本1.0.0');
         }
     }
 
-    //只绑定一次事件，不再重复注册
     function bindSearchLogic() {
         if(eventBindFlag) return;
         document.body.addEventListener("click", globalClickHandler, true);
@@ -268,7 +253,6 @@ console.log('脚本运行成功，版本1.0.0');
         eventBindFlag = true;
     }
 
-    //SPA路由监听
     const originalPush = history.pushState;
     history.pushState = function (...args) {
         originalPush.apply(history, args);
@@ -276,19 +260,16 @@ console.log('脚本运行成功，版本1.0.0');
     };
     window.addEventListener("popstate", () => setTimeout(() => bindSearchLogic(), 350));
 
-    //MutationObserver + 防抖降噪，避免高频刷屏扫描
     const observer = new MutationObserver(() => {
         clearTimeout(observerDebounceTimer);
         observerDebounceTimer = setTimeout(() => {
             bindSearchLogic();
             const cards = document.querySelectorAll('a[href^="/video/"]');
             if (cards.length === 0 && location.pathname.startsWith('/@')) {
-                console.warn("⚠️自检告警：作者主页未扫描到视频卡片，DOM结构可能改版！");
+                console.warn("⚠️自检告警：作者主页未扫描到视频卡片，结构可能改版！请更新");
             }
-        }, 500); //防抖延迟，合并多次DOM变动
+        }, 500);
     });
     observer.observe(document.body, { childList: true, subtree: true, attributes: false });
     bindSearchLogic();
 })();
-
-alert('脚本加载完成');
